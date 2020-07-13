@@ -1,0 +1,17 @@
+{
+  "name": "csv-2-firestore",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^5.1.0",
+    "csvtojson": "^2.0.10",
+    "firebase-admin": "^8.13.0",
+    "fs-extra": "^9.0.1"
+  }
+}
