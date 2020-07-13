@@ -16,7 +16,5 @@
   "bin": {
     "fire-migrate": "dist/index.js"
   },
-  "devDependencies": {
-    "typescript": "^3.9.6"
-  }
+  "devDependencies": {}
 }
