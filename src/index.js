@@ -1,13 +1,17 @@
-import * as admin from 'firebase-admin';
-import * as csv from 'csvtojson';
-import * as fs from 'fs-extra';
-import * as args from 'commander';
+// import * as admin from 'firebase-admin';
+// import * as csv from 'csvtojson';
+// import * as fs from 'fs-extra';
 
-args
-  .version("0.0.1")
-  .option("-s, -src <apth", "Source file path")
-  .option("-i, --id [id]", "Field to use for document ID")
-  .parse(process.argv);
+const admin = require('firebase-admin');
+const csv = require('csvtojson');
+const fs = require('fs-extra');
+// import * as args from 'commander';
+
+// args
+//   .version("0.0.1")
+//   .option("-s, --src <path", "Source file path")
+//   .option("-i, --id [id]", "Field to use for document ID")
+//   .parse(process.argv);
 
 
 // Firebase App Initialization
@@ -19,57 +23,91 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
+const colPath = 'sales';
+const sourceFile = 'SalesJan2009.csv';
+let specificId;
+
+
 // Main migration function
 async function migrate() {
   try {
-    const colPath = args.collection;
-    const file = args.src;
+    // const colPath = args.collection;
+    // const file = args.src;
 
     // Exit if missing necesssary data
-    if (!colPath || !file) return Promise.reject('Missing required data');
+    if (!colPath || !sourceFile) return Promise.reject('Missing required data');
     const colRef = db.collection(colPath);
     const batch = db.batch();
 
-    let data;
-    if (file.includes('.json')) {
-      data = await fs.readJSON(file);
-    }
+    let data = [{"animal":"dog"}, {"animal":"cat"}, {"animal":"mouse"}];
 
-    if (file.includes('.csv')) {
-      data = await readCSV(file);
-    }
+    // if (sourceFile.includes('.json')) {
+    //   data = await fs.readJSON(sourceFile);
+    // }
 
-    for (const item of data) {
-      const id = args.id ? item[args.id].toString() : colRef.doc().id;
-      const docRef = colRef.doc(id);
-      batch.set(docRef, item);
-    }
+    // if (sourceFile.includes('.csv')) {
+    //   data = await readCSV(sourceFile);
+    //   console.log('got data');
+    // }
+
+    // for (const item of data) {
+    //   // const id = args.id ? item[args.id].toString() : colRef.doc().id;
+    //   const id = specificId ? item[specificId].toString() : colRef.doc().id;
+    //   const docRef = colRef.doc(id);
+    //   batch.set(docRef, item);
+    // }
+
+    data.forEach((item, count) => {
+      if(count < 500) {
+        // const id = specificId ? item[specificId].toString() : colRef.doc().id;
+        // const docRef = colRef.doc(id);
+        // batch.set(docRef, item);
+        const id = specificId ? item[specificId].toString() : colRef.doc().id;
+        const docRef = colRef.doc(id);
+        console.log(item);
+        batch.set(docRef, item);
+      }
+    });
     
     // Commit the batch
-    await batch.commit();
-    console.log('Firestore updated. Migration was a success!');
+    // await batch.commit();
+    // console.log('Firestore updated. Migration was a success!');
   } catch (error) {
     console.error('Migration failed', error);
   }
 }
 
-function readCSV(path): Promise<any> {
+async function readCSV(path) {
   return new Promise((resolve, reject) => {
     let lineCount = 0;
 
     csv()
       .fromFile(path)
-      .on('json', data => {
+      .on('data', data => {
         // fired on every row read
         lineCount++;
+        // if(lineCount < 2) {
+        //   const jsonStr = data.toString('utf8');
+        //   console.log(jsonStr);
+        // }
       })
-      .on('end parsed', data => {
+      .on('done', data => {
         console.info(`CSV read complete. ${lineCount} rows parsed`);
         resolve(data);
       })
-      .on('error', err => reject(err));
+      .on('error', err => {
+        console.log('noooo');
+        reject(err);
+      });
   })
 }
+
+// Minimal version probably not very good
+// async function readCSV_alt(file) {
+//     console.log('getting data');
+//     const data = await csv().fromFile(sourceFile);
+//     console.log(`CSV read complete. ${data.length} rows parsed`);
+// }
 
 // Run
 migrate();
